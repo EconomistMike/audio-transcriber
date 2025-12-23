@@ -1,13 +1,13 @@
 # Audio Transcriber
 
-A CLI tool for transcribing meeting audio files with speaker diarization using WhisperX.
+A CLI tool for transcribing meeting audio files with speaker diarization and automatic speaker recognition using voice embeddings.
 
 ## Features
 
 - Transcribes audio files (mp3, wav, m4a, flac, ogg, webm)
 - Speaker diarization to identify different speakers
-- Timestamped markdown output
-- Configurable speaker name mapping
+- **Voice embeddings for automatic speaker recognition**
+- Timestamped markdown or JSON output
 - Apple Silicon (M1/M2/M3) compatible
 
 ## Installation
@@ -39,12 +39,38 @@ Visit these links and accept the terms (required for speaker diarization):
 
 ## Usage
 
-```bash
-# Basic usage
-python transcribe.py audio/meeting.mp3
+### Basic Transcription
 
+```bash
+python transcribe.py audio/meeting.mp3
+```
+
+### Speaker Enrollment
+
+Enroll speakers for automatic recognition:
+
+```bash
+# Enroll a speaker from an audio sample
+python transcribe.py --enroll "Mike" audio/mike-sample.mp3
+
+# Add more samples for better accuracy
+python transcribe.py --enroll "Mike" audio/mike-sample2.mp3
+
+# List enrolled speakers
+python transcribe.py --list-speakers
+```
+
+### Advanced Options
+
+```bash
 # Specify model size
 python transcribe.py audio/meeting.mp3 --model medium
+
+# Export as JSON (for GUI/API consumption)
+python transcribe.py audio/meeting.mp3 --format json
+
+# Adjust speaker matching threshold (0-1, default: 0.7)
+python transcribe.py audio/meeting.mp3 --threshold 0.6
 
 # Custom output filename
 python transcribe.py audio/meeting.mp3 --output my-meeting.md
@@ -60,23 +86,9 @@ python transcribe.py audio/meeting.mp3 --output my-meeting.md
 | medium | Slow | High | ~5GB |
 | large-v3 | Slowest | Highest | ~10GB |
 
-## Speaker Mapping
+## Output Formats
 
-After transcription, edit `speaker_map.json` to assign real names:
-
-```json
-{
-  "SPEAKER_00": "Mike",
-  "SPEAKER_01": "Sarah",
-  "_embeddings": {}
-}
-```
-
-The `_embeddings` key is reserved for future voice recognition features.
-
-## Output Format
-
-Transcripts are saved to `transcripts/` as markdown:
+### Markdown (default)
 
 ```markdown
 # Meeting Transcript
@@ -92,16 +104,62 @@ Hello everyone, thanks for joining today's meeting.
 Thanks for having us. Let's get started.
 ```
 
+### JSON (for GUI/API)
+
+```json
+{
+  "source": "meeting.mp3",
+  "date": "2025-12-23T10:00:00",
+  "duration": 3600.5,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 5.2,
+      "speaker_id": "SPEAKER_00",
+      "speaker_name": "Mike",
+      "confidence": 0.85,
+      "text": "Hello everyone..."
+    }
+  ]
+}
+```
+
 ## Project Structure
 
 ```
 audio-transcriber/
-├── transcribe.py      # Main CLI script
-├── requirements.txt   # Dependencies
-├── speaker_map.json   # Speaker name mappings
-├── .env               # HuggingFace token (not committed)
-├── audio/             # Input audio files
-└── transcripts/       # Output markdown files
+├── transcribe.py           # CLI interface
+├── transcriber/            # Core library
+│   ├── core.py            # Transcription & export
+│   ├── embeddings.py      # Voice embedding extraction
+│   └── speakers.py        # Speaker profile management
+├── speaker_profiles.json   # Enrolled speaker data
+├── requirements.txt        # Dependencies
+├── audio/                  # Input audio files
+└── transcripts/            # Output files
+```
+
+## Library API
+
+The `transcriber` module can be imported directly for GUI or API integration:
+
+```python
+from transcriber import (
+    transcribe_with_speakers,
+    export_transcript,
+    enroll_speaker,
+    load_profiles,
+    list_speakers,
+)
+
+# Load profiles
+profiles = load_profiles()
+
+# Transcribe with speaker recognition
+result = transcribe_with_speakers("meeting.mp3", profiles, threshold=0.7)
+
+# Export to JSON
+json_output = export_transcript(result, "meeting.mp3", profiles, format="json")
 ```
 
 ## License

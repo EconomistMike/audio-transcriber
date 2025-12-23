@@ -25,3 +25,10 @@ audio/*.webm
 
 # macOS
 .DS_Store
+
+# Downloaded models (cache)
+models/
+
+# Transcripts (output)
+transcripts/*.md
+transcripts/*.json
