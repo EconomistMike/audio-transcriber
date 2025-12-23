@@ -12,7 +12,17 @@ from datetime import datetime
 from pathlib import Path
 
 import torch
+
+# PyTorch 2.6+ defaults to weights_only=True which breaks pyannote model loading.
+# Monkey-patch to force weights_only=False for trusted HuggingFace models.
+_original_torch_load = torch.load
+def _patched_torch_load(*args, **kwargs):
+    kwargs["weights_only"] = False
+    return _original_torch_load(*args, **kwargs)
+torch.load = _patched_torch_load
+
 import whisperx
+from whisperx.diarize import DiarizationPipeline
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -69,14 +79,17 @@ def transcribe_audio(audio_path: Path, model_name: str = "small") -> dict:
 
     Returns dict with segments containing speaker labels and timestamps.
     """
-    device = get_device()
-    compute_type = "float32" if device == "mps" else "float16"
+    # WhisperX uses CTranslate2 which only supports CPU and CUDA
+    whisper_device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Pyannote can use MPS on Apple Silicon
+    pyannote_device = get_device()
+    compute_type = "float16" if whisper_device == "cuda" else "float32"
 
-    print(f"Using device: {device}")
+    print(f"Using device: {whisper_device} (whisper), {pyannote_device} (diarization)")
     print(f"Loading WhisperX model ({model_name})...")
 
     # Load model
-    model = whisperx.load_model(model_name, device, compute_type=compute_type)
+    model = whisperx.load_model(model_name, whisper_device, compute_type=compute_type)
 
     # Transcribe
     print("Transcribing audio...")
@@ -87,14 +100,14 @@ def transcribe_audio(audio_path: Path, model_name: str = "small") -> dict:
     print("Aligning transcription...")
     model_a, metadata = whisperx.load_align_model(
         language_code=result["language"],
-        device=device
+        device=whisper_device
     )
     result = whisperx.align(
         result["segments"],
         model_a,
         metadata,
         audio,
-        device,
+        whisper_device,
         return_char_alignments=False
     )
 
@@ -106,9 +119,9 @@ def transcribe_audio(audio_path: Path, model_name: str = "small") -> dict:
         return result
 
     print("Running speaker diarization...")
-    diarize_model = whisperx.DiarizationPipeline(
+    diarize_model = DiarizationPipeline(
         use_auth_token=hf_token,
-        device=device
+        device=pyannote_device
     )
     diarize_segments = diarize_model(audio)
     result = whisperx.assign_word_speakers(diarize_segments, result)

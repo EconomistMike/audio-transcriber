@@ -22,3 +22,6 @@ audio/*.webm
 
 # Claude Code
 .claude/
+
+# macOS
+.DS_Store
