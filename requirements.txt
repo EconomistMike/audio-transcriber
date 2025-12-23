@@ -2,3 +2,4 @@ whisperx
 torch
 torchaudio
 python-dotenv
+streamlit

@@ -1,12 +1,13 @@
 # Audio Transcriber
 
-A CLI tool for transcribing meeting audio files with speaker diarization and automatic speaker recognition using voice embeddings.
+A tool for transcribing meeting audio with speaker diarization, automatic speaker recognition, and a web GUI for managing speakers and transcripts.
 
 ## Features
 
 - Transcribes audio files (mp3, wav, m4a, flac, ogg, webm)
 - Speaker diarization to identify different speakers
 - **Voice embeddings for automatic speaker recognition**
+- **Web GUI** for managing speakers and viewing transcripts
 - Timestamped markdown or JSON output
 - Apple Silicon (M1/M2/M3) compatible
 
@@ -37,7 +38,21 @@ Visit these links and accept the terms (required for speaker diarization):
 - https://huggingface.co/pyannote/speaker-diarization-3.1
 - https://huggingface.co/pyannote/segmentation-3.0
 
-## Usage
+## Web GUI
+
+Launch the web interface:
+
+```bash
+streamlit run app.py
+```
+
+The GUI provides:
+- **Dashboard** - Quick stats and recent transcripts
+- **Speakers** - Enroll, view, and manage speaker profiles
+- **Transcribe** - Upload audio and transcribe with speaker recognition
+- **Transcripts** - Browse, search, and play back past transcripts
+
+## CLI Usage
 
 ### Basic Transcription
 
@@ -128,6 +143,11 @@ Thanks for having us. Let's get started.
 
 ```
 audio-transcriber/
+├── app.py                  # Web GUI (Streamlit)
+├── pages/                  # GUI pages
+│   ├── 1_Speakers.py      # Speaker management
+│   ├── 2_Transcribe.py    # Transcription interface
+│   └── 3_Transcripts.py   # Transcript viewer
 ├── transcribe.py           # CLI interface
 ├── transcriber/            # Core library
 │   ├── core.py            # Transcription & export
