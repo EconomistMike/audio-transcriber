@@ -1,0 +1,24 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Audio files (large, don't commit)
+audio/*.mp3
+audio/*.wav
+audio/*.m4a
+audio/*.flac
+audio/*.ogg
+audio/*.webm
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Claude Code
+.claude/
